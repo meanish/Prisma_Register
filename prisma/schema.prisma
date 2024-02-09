@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model account {
+  id                Int     @id @default(autoincrement())
+  userId            Int
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              user    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Account_userId_fkey")
+
+  @@unique([provider, providerAccountId], map: "Account_provider_providerAccountId_key")
+  @@index([userId], map: "Account_userId_fkey")
+}
+
+model passwordresettoken {
+  id      Int      @id @default(autoincrement())
+  email   String
+  token   String   @unique(map: "PasswordResetToken_token_key")
+  expires DateTime
+
+  @@unique([email, token], map: "PasswordResetToken_email_token_key")
+}
+
+model twofactorconfirmation {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique(map: "TwoFactorConfirmation_userId_key")
+  user   user @relation(fields: [userId], references: [id], onDelete: Cascade, map: "TwoFactorConfirmation_userId_fkey")
+}
+
+model twofactortoken {
+  id      Int      @id @default(autoincrement())
+  email   String
+  token   String   @unique(map: "TwoFactorToken_token_key")
+  expires DateTime
+
+  @@unique([email, token], map: "TwoFactorToken_email_token_key")
+}
+
+model user {
+  id                    Int                    @id @default(autoincrement())
+  name                  String?
+  email                 String?                @unique(map: "User_email_key")
+  emailVerifiedTime     DateTime?
+  emailVerified         Boolean                @default(false)
+  image                 String?
+  hashedpassword        String?
+  role                  user_role              @default(USER)
+  isTwoFactorEnabled    Boolean                @default(false)
+  account               account[]
+  twofactorconfirmation twofactorconfirmation?
+}
+
+model verificationtoken {
+  id      Int      @id @default(autoincrement())
+  email   String
+  token   String   @unique(map: "VerificationToken_token_key")
+  expires DateTime
+
+  @@unique([email, token], map: "VerificationToken_email_token_key")
+}
+
+enum user_role {
+  ADMIN
+  USER
+}
